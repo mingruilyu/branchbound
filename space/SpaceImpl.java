@@ -129,4 +129,9 @@ public class SpaceImpl extends UnicastRemoteObject implements Space {
 	public Object getShared() throws RemoteException {
 		return shared;
 	}
+
+	@Override
+	public void putShared(Object shared) throws RemoteException {
+		this.shared = shared;
+	}
 }

@@ -26,7 +26,7 @@ public class ClientEuclideanTsp extends Client<List<Integer>> {
 
 	public ClientEuclideanTsp(String serverDomain, boolean prefetchFlag) throws RemoteException,
 			NotBoundException, MalformedURLException {
-		super("Euclidean TSP", serverDomain, new JobEuclideanTsp(12, CITIES, prefetchFlag));
+		super("Euclidean TSP", serverDomain, new JobEuclideanTsp(12, CITIES));
 	}
 
 	public static void main(String[] args) throws Exception {

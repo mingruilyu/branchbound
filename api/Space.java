@@ -125,4 +125,6 @@ public interface Space extends Remote {
 	
 	
 	public Object getShared() throws RemoteException;
+	
+	public void putShared(Object shared) throws RemoteException;
 }

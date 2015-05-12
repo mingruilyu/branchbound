@@ -203,7 +203,7 @@ public class TaskEuclideanTsp extends Task<List<Integer>> implements
 	 * 
 	 * @return the list with the minimum cost of travel
 	 */
-	private List<Integer> getResult() {
+	private List<Integer> getResult(Space space, double upperbound) {
 		List<Integer> minList = this.getArg(0);
 		double minCost = calculateCost(minList);
 		for (int i = 1; i < this.getArgCount(); i++) {
@@ -215,6 +215,12 @@ public class TaskEuclideanTsp extends Task<List<Integer>> implements
 				minList.addAll(tempList);
 			}
 		}
+		if(minCost < upperbound)
+			try {
+				space.putShared(upperbound);
+			} catch (RemoteException e) {
+				e.printStackTrace();
+			}
 		return minList;
 	}
 
@@ -228,17 +234,15 @@ public class TaskEuclideanTsp extends Task<List<Integer>> implements
 	 */
 	@Override
 	public void run(Space space) throws RemoteException {
+		double upperbound = (double) space.getShared();
 		if (this.missingArgCount <= 0) {
-			List<Integer> result;
+			List<Integer> result = null;
 			if (this.missingArgCount == -1)
 				result = this.getArg(0);
-			else {
-				result = getResult();
-			}
+			else result = getResult(space, upperbound);
 			this.feedback(space, result);
 		} else {
 			int parentId = space.getTaskId();
-			double upperbound = (double) space.getShared();
 			this.spawn(space, parentId, upperbound);
 			space.suspendTask(this);
 		}
