@@ -27,9 +27,6 @@ public class Client<T> extends JFrame {
 	private long clientStartTime;
 	protected Space space;
 	private Job<T> job;
-	public static final String PREFETCH_ON = "PF_ON";
-	public static final String PREFETCH_OFF = "PF_OFF";
-	
 	public Client(final String title, final String domainName, final Job<T> job) 
 			throws RemoteException, NotBoundException,
 			MalformedURLException {

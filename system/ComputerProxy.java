@@ -1,17 +1,10 @@
 package system;
 
 import java.rmi.RemoteException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 
 import space.SpaceImpl;
-import api.Space;
-import api.Task;
 
-public class ComputerProxy extends Thread {
+public class ComputerProxy {
 	final private Computer computer;
 	final private SpaceImpl space;
 	final public int id;

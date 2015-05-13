@@ -12,37 +12,33 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import system.Computer;
-import system.ComputerImpl;
 import system.ComputerProxy;
 import api.Job;
 import api.Space;
 import api.Task;
 
 public class SpaceImpl extends UnicastRemoteObject implements Space {
-	public BlockingQueue<Task> taskQueue;
-	private Map<Integer, Task> waitingQueue;
-	int taskCount = 0;
+	private BlockingQueue<Task> taskQueue;
+	private Map<Long, Task> waitingQueue;
 	private BlockingQueue resultQueue;
 	private Map<Integer, ComputerProxy> computerList;
+	private long taskCounter;
+	private Double shared;
 	private final static String RUNNABLE_ON = "SR_ON";
 	private final static String RUNNABLE_OFF = "SR_OFF";
-	private Object shared;
-	public SpaceImpl() throws RemoteException {
+	
+	public SpaceImpl()  throws RemoteException {
 		this.taskQueue = new LinkedBlockingQueue<Task>();
 		this.computerList = Collections.synchronizedMap(new HashMap<Integer, ComputerProxy>());
-		this.waitingQueue = Collections.synchronizedMap(new HashMap<Integer, Task>());
+		this.waitingQueue = Collections.synchronizedMap(new HashMap<Long, Task>());
 		this.resultQueue = new LinkedBlockingQueue<Task>();
+		this.shared = (double) 100000;
 	}
 
-	public void deleteComputerProxy(int proxyId) {
-		computerList.remove(proxyId);
-	}
-	
 	@Override
 	public void register(Computer computer) throws RemoteException {
-		int id = computerList.size();
-		ComputerProxy computerProxy = new ComputerProxy(this, computer, id);
-		this.computerList.put(id, computerProxy);
+		ComputerProxy computerProxy = new ComputerProxy(this, computer, this.computerList.size());
+		this.computerList.put(this.computerList.size(), computerProxy);
 		computerProxy.startWorker();
 	}
 
@@ -50,18 +46,21 @@ public class SpaceImpl extends UnicastRemoteObject implements Space {
 	public <T> Task<T> fetchTask() throws RemoteException, InterruptedException {
 		return this.taskQueue.take();
 	}
+	
+	synchronized public void deleteComputerProxy(int proxyId) {
+		this.computerList.remove(proxyId);
+	}
 
-	public static void main(String[] args) throws RemoteException,
-			NotBoundException {
+	public static void main(String[] args) throws RemoteException, NotBoundException {
 		Space space = null;
-		if (System.getSecurityManager() == null)
+		if(System.getSecurityManager() == null)
 			System.setSecurityManager(new SecurityManager());
 		try {
 			space = new SpaceImpl();
+			SpaceWorker spaceWorker = new SpaceWorker(space);
 			Registry registry = LocateRegistry.createRegistry(Space.PORT);
 			registry.rebind(Space.SERVICE_NAME, space);
 			System.out.println("Space in on, waiting for connection ...");
-			SpaceWorker spaceWorker = new SpaceWorker(space);
 			if(args[0].equals(SpaceImpl.RUNNABLE_ON)) {
 				spaceWorker.start();
 				System.out.println("Space Runnable is on");
@@ -81,31 +80,17 @@ public class SpaceImpl extends UnicastRemoteObject implements Space {
 		}
 	}
 
-	public int getTaskId() throws RemoteException {
-		return this.taskCount ++;
-	}
-	
 	@Override
-	public <T> int suspendTask(Task<T> task)
+	public <T> void insertArg(T arg, long id, int slotIndex)
 			throws RemoteException {
-		synchronized (waitingQueue) {
-			int id = this.waitingQueue.size();
-			this.waitingQueue.put(id, task);
-			return id;
+		Task task = this.waitingQueue.get(id);	
+		synchronized(task) {
+			task.insertArg(arg, slotIndex);	
+			if(task.isReady()) {
+				this.waitingQueue.remove(id);
+				this.issueTask(task);
+			}
 		}
-	}
-
-	@Override
-	public <T> void insertArg(T arg, int id, int slotIndex)
-			throws RemoteException {
-		Task task = null;
-		synchronized (waitingQueue) {
-			task = this.waitingQueue.get(id);
-			task.insertArg(arg, slotIndex);
-		}
-		if (task.isReady())
-			this.issueTask(task);
-
 	}
 
 	@Override
@@ -114,24 +99,34 @@ public class SpaceImpl extends UnicastRemoteObject implements Space {
 	}
 
 	@Override
-	public <T> void setupResult(T result) throws RemoteException,
-			InterruptedException {
+	public <T> void setupResult(T result) throws RemoteException, InterruptedException {
 		this.resultQueue.put(result);
 	}
 
 	@Override
 	public <T> void startJob(Job<T> job) throws RemoteException,
 			InterruptedException {
-		this.taskQueue.put(job.toTask(this));
+		this.taskQueue.put(job.toTask(this));		
 	}
 
 	@Override
-	public Object getShared() throws RemoteException {
-		return shared;
+	public <T> void suspendTask(Task<T> task, long id) throws RemoteException {
+		this.waitingQueue.put(id, task);
 	}
 
 	@Override
-	public void putShared(Object shared) throws RemoteException {
-		this.shared = shared;
+	synchronized public long getTaskId() throws RemoteException {
+		return this.taskCounter ++;
+	}
+
+	@Override
+	public Double getShared() throws RemoteException {
+		return this.shared;
+	}
+
+	@Override
+	synchronized public void putShared(Double shared) throws RemoteException {
+		if(this.shared > shared)
+			this.shared = shared;
 	}
 }

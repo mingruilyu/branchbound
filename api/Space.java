@@ -5,7 +5,6 @@ import java.rmi.RemoteException;
 import java.util.List;
 
 import system.Computer;
-import system.ComputerImpl;
 
 /**
  * 
@@ -62,7 +61,7 @@ public interface Space extends Remote {
 	 *             occurs if there is a communication problem or the remote
 	 *             service is not responding.
 	 */
-	<T> int suspendTask(Task<T> task) throws RemoteException;
+	<T> void suspendTask(Task<T> task, long id) throws RemoteException;
 
 	/**
 	 * Insert the argument to the corresponding slot in the closure.
@@ -77,7 +76,8 @@ public interface Space extends Remote {
 	 *             occurs if there is a communication problem or the remote
 	 *             service is not responding.
 	 */
-	<T> void insertArg(T arg, int id, int slotIndex) throws RemoteException;
+	<T> void insertArg(T arg, long id, int slotIndex) throws RemoteException;
+
 	/**
 	 * Remove and return the task from the task queue.
 	 * 
@@ -120,11 +120,9 @@ public interface Space extends Remote {
 	 */
 	<T> void startJob(Job<T> job) throws RemoteException, InterruptedException;
 	
+	public long getTaskId() throws RemoteException;
 	
-	public int getTaskId() throws RemoteException;
+	public Double getShared() throws RemoteException;
 	
-	
-	public Object getShared() throws RemoteException;
-	
-	public void putShared(Object shared) throws RemoteException;
+	public void putShared(Double shared) throws RemoteException;
 }

@@ -19,27 +19,34 @@ import tasks.TaskEuclideanTsp;
 
 public class ClientEuclideanTsp extends Client<List<Integer>> {
 	private static final int NUM_PIXALS = 600;
-	public static final double[][] CITIES = { { 1, 1 }, { 8, 1 }, { 8, 8 },
-			{ 1, 8 }, { 2, 2 }, { 7, 2 }, { 7, 7 }, { 2, 7 }, { 3, 3 },
-			{ 6, 3 }, { 6, 6 }, { 3, 6 } };
+	public static final double[][] CITIES = {
+		{ 1, 1 },
+		{ 8, 1 },
+		{ 8, 8 },
+		{ 1, 8 },
+		{ 2, 2 },
+		{ 7, 2 },
+		{ 7, 7 },
+		{ 2, 7 },
+		{ 3, 3 },
+		{ 6, 3 },
+		{ 6, 6 },
+		{ 3, 6 },
+		//{ 4, 4 },
+		//{ 5, 4 },
+		//{ 5, 5 },
+		//{ 4, 5 }
+	};
 
 
-	public ClientEuclideanTsp(String serverDomain, boolean prefetchFlag) throws RemoteException,
+	public ClientEuclideanTsp(String serverDomain) throws RemoteException,
 			NotBoundException, MalformedURLException {
-		super("Euclidean TSP", serverDomain, new JobEuclideanTsp(12, CITIES));
+		super("Euclidean TSP", serverDomain, new JobEuclideanTsp(12));
 	}
 
 	public static void main(String[] args) throws Exception {
 		System.setSecurityManager(new SecurityManager());
-		final ClientEuclideanTsp client;
-		if(args[1].equals(Client.PREFETCH_ON)) {
-			client = new ClientEuclideanTsp(args[0], true);
-			System.out.println("Prefetch is on");
-		}
-		else {
-			client = new ClientEuclideanTsp(args[0], false);
-			System.out.println("Prefetch is off");
-		}
+		final ClientEuclideanTsp client = new ClientEuclideanTsp(args[0]);
 		client.begin();
 		final List<Integer> value = client.runTask();
 		System.out.println(value);

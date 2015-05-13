@@ -7,8 +7,8 @@ import api.Space;
 import api.Task;
 
 public interface Computer extends Remote {
-	long executeTask(Task task, Space space) throws RemoteException, InterruptedException;
-	void exit() throws RemoteException;
+	<T> long executeTask(Task<T> t, Space space) throws RemoteException;
 	int getWorkerNo() throws RemoteException;
+	void exit() throws RemoteException;
 	void decrementWorkerNo() throws RemoteException;
 }

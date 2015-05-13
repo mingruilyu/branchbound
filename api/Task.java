@@ -4,7 +4,7 @@ import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
-import system.ComputerImpl;
+import java.util.concurrent.Callable;
 
 /**
  * Task is an encapsulation of some computation. It is implements Serializable
@@ -16,12 +16,11 @@ import system.ComputerImpl;
  * @param <V>
  */
 public abstract class Task<V> implements Serializable {
-	public static final long serialVersionUID = 227L;
 	protected int slotIndex;
-	final public int parentId;
+	protected long parentId;
 	protected List<V> argList;
 	protected int missingArgCount;
-	protected boolean prefetchFlag;
+
 	protected static final int WAITING_ANSWER = -1;
 	public static final int NO_PARENT = -1;
 
@@ -44,10 +43,20 @@ public abstract class Task<V> implements Serializable {
 	 * @param slotIndex
 	 *            the position where the missing argument belongs to.
 	 */
-	public Task(int parentId, int slotIndex) {
+	public Task(long parentId, int slotIndex) {
 		this.slotIndex = slotIndex;
 		this.parentId = parentId;
 		this.argList = new ArrayList<V>();
+	}
+
+	/**
+	 * Set successor's ID.
+	 * 
+	 * @param parentId
+	 *            the ID of the successor.
+	 */
+	public void setId(int parentId) {
+		this.parentId = parentId;
 	}
 
 	/**
@@ -69,8 +78,8 @@ public abstract class Task<V> implements Serializable {
 	 *             occurs if there is a communication problem or the remote
 	 *             service is not responding.
 	 */
+	abstract public void spawn(Space space, long parentId) throws RemoteException;
 
-	abstract public void spawn(Space space, int parentId, double upperbound) throws RemoteException;
 	/**
 	 * Space set the appropriate input element of the successor task. If the
 	 * task is the root task, put the result in the result queue.
@@ -82,16 +91,15 @@ public abstract class Task<V> implements Serializable {
 	 *             occurs if there is a communication problem or the remote
 	 *             service is not responding.
 	 */
-	public void feedback(Space space, V result) throws RemoteException {
+	public void feedback(V result, Space space) throws RemoteException {
 		if (this.parentId == NO_PARENT)
 			try {
 				space.setupResult(result);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-		else{
+		else
 			space.insertArg(result, this.parentId, this.slotIndex);
-		}
 	}
 
 	/**
@@ -132,9 +140,4 @@ public abstract class Task<V> implements Serializable {
 		this.missingArgCount--;
 	}
 
-	public String toString(){
-		StringBuilder sb = new StringBuilder();
-		sb.append("Parent ID: ").append(parentId);
-		return sb.toString();
-	}
 }
