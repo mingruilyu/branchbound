@@ -8,7 +8,9 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import system.Computer;
@@ -18,7 +20,7 @@ import api.Space;
 import api.Task;
 
 public class SpaceImpl extends UnicastRemoteObject implements Space {
-	private BlockingQueue<Task> taskQueue;
+	private BlockingDeque<Task> taskQueue;
 	private Map<Long, Task> waitingQueue;
 	private BlockingQueue resultQueue;
 	private Map<Integer, ComputerProxy> computerList;
@@ -28,7 +30,7 @@ public class SpaceImpl extends UnicastRemoteObject implements Space {
 	private final static String RUNNABLE_OFF = "SR_OFF";
 	
 	public SpaceImpl()  throws RemoteException {
-		this.taskQueue = new LinkedBlockingQueue<Task>();
+		this.taskQueue = new LinkedBlockingDeque<Task>();
 		this.computerList = Collections.synchronizedMap(new HashMap<Integer, ComputerProxy>());
 		this.waitingQueue = Collections.synchronizedMap(new HashMap<Long, Task>());
 		this.resultQueue = new LinkedBlockingQueue<Task>();
@@ -44,7 +46,7 @@ public class SpaceImpl extends UnicastRemoteObject implements Space {
 
 	@Override
 	public <T> Task<T> fetchTask() throws RemoteException, InterruptedException {
-		return this.taskQueue.take();
+		return this.taskQueue.takeLast();
 	}
 	
 	synchronized public void deleteComputerProxy(int proxyId) {

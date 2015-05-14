@@ -32,7 +32,7 @@ public class ClientEuclideanTsp extends Client<List<Integer>> {
 		{ 6, 3 },
 		{ 6, 6 },
 		{ 3, 6 },
-		//{ 4, 4 },
+		{ 4, 4 },
 		//{ 5, 4 },
 		//{ 5, 5 },
 		//{ 4, 5 }
@@ -41,7 +41,7 @@ public class ClientEuclideanTsp extends Client<List<Integer>> {
 
 	public ClientEuclideanTsp(String serverDomain) throws RemoteException,
 			NotBoundException, MalformedURLException {
-		super("Euclidean TSP", serverDomain, new JobEuclideanTsp(12));
+		super("Euclidean TSP", serverDomain, new JobEuclideanTsp(13));
 	}
 
 	public static void main(String[] args) throws Exception {
