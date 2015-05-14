@@ -76,7 +76,7 @@ public interface Space extends Remote {
 	 *             occurs if there is a communication problem or the remote
 	 *             service is not responding.
 	 */
-	<T> void insertArg(T arg, long id, int slotIndex) throws RemoteException;
+	<T> void insertArg(Argument<T> arg, long id, int slotIndex) throws RemoteException;
 
 	/**
 	 * Remove and return the task from the task queue.

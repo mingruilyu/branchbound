@@ -15,6 +15,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import system.Computer;
 import system.ComputerProxy;
+import api.Argument;
 import api.Job;
 import api.Space;
 import api.Task;
@@ -83,7 +84,7 @@ public class SpaceImpl extends UnicastRemoteObject implements Space {
 	}
 
 	@Override
-	public <T> void insertArg(T arg, long id, int slotIndex)
+	public <T> void insertArg(Argument<T> arg, long id, int slotIndex)
 			throws RemoteException {
 		Task task = this.waitingQueue.get(id);	
 		synchronized(task) {

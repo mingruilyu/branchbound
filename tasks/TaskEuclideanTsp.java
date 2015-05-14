@@ -7,6 +7,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import javax.management.MXBean;
+
+import jdk.internal.dynalink.beans.StaticClass;
 import api.Space;
 import api.Task;
 
@@ -20,6 +23,8 @@ import api.Task;
 public class TaskEuclideanTsp extends Task<List<Integer>> implements
 		Serializable {
 	public static final long serialVersionUID = 227L;
+	
+	private long decomposeTime = 0;
 	private int settledCity;
 	private int n;
 	private List<Integer> settledCities;
@@ -75,7 +80,6 @@ public class TaskEuclideanTsp extends Task<List<Integer>> implements
 		this.n = n;
 		this.total = total;
 		this.settledCities = new ArrayList<Integer>(prevCities);
-		this.argList = new ArrayList<List<Integer>>();
 		// ========================================================
 		//update the lowerbound in O(1)
 		if(this.settledCities.size() == 0) {
@@ -236,20 +240,26 @@ public class TaskEuclideanTsp extends Task<List<Integer>> implements
 	 * collect all the argument and get the final result
 	 * 
 	 * @return the list with the minimum cost of travel
+	 * @throws RemoteException 
 	 */
-	private List<Integer> getResult() {
+	private TspArgument getResult() throws RemoteException {
+		long start = System.currentTimeMillis();
 		List<Integer> minList = null;
 		double minCost = Double.MAX_VALUE;
+		long maxTime = 0;
 		for (int i = 0; i < this.getArgCount(); i++) {
-			List<Integer> tempList = this.getArg(i);
+			List<Integer> tempList = this.getArg(i).getArg();
 			if(tempList == null) continue;
 			double tempCost = calculateCost(tempList);
 			if (tempCost < minCost) {
 				minCost = tempCost;
 				minList = tempList;
 			}
+			long tempTime = this.getArg(i).getTime();
+            if(tempTime > maxTime) maxTime = tempTime;
 		}
-		return minList;
+		long end = System.currentTimeMillis();
+		return new TspArgument(minList, minCost, end - start + maxTime + this.decomposeTime);
 	}
 
 	/**
@@ -263,32 +273,41 @@ public class TaskEuclideanTsp extends Task<List<Integer>> implements
 	@Override
 	public void run(Space space) throws RemoteException {
 		double upperbound = space.getShared();
+		TspArgument tspArgument;
+		long time = 0;
+
 		if (this.missingArgCount <= 0) {
-			List<Integer> result;
+			List<Integer> result = null;
 			if (this.missingArgCount == -1) {
 				// direct calculation
+				long start = System.currentTimeMillis();
+				double minCost = 0;
 				if(this.lowerbound < upperbound) {
 					Set<Integer> set = new HashSet<Integer>();
 					list2Set(settledCities, set);
 					List<ArrayList<Integer>> permutation = generatePermutation(set);
 					result = getMinCost(settledCities, permutation);
+					minCost = calculateCost(result);
 				} else {
 					System.out.println("Pruned!");
 					result = null;
+					minCost = Double.MAX_VALUE;
 				}
-			}
-			else {
+				long end = System.currentTimeMillis();
+				time = end - start;
+				tspArgument = new TspArgument(result, minCost, time);
+			} else {
 				// calculate the minimum route of argument list
 				// notice that the result here can also be null
-				result = getResult();
+				tspArgument = getResult();
 			}
-			
+
 			if(result != null) {
 				double minCost = calculateCost(result);
 				if(minCost < upperbound) 
 					space.putShared(minCost);
 			}
-			this.feedback(result, space);
+			this.feedback(tspArgument, space);
 		} else {
 			// We must make sure that the suspend come before spawn,
 			// otherwise we will have children that cannot find father
@@ -297,9 +316,14 @@ public class TaskEuclideanTsp extends Task<List<Integer>> implements
 			// the children has set its parent Id to some value yet the
 			// successor that correspond to this id was not put into waiting
 			// queue. 
+			
+			long start = System.currentTimeMillis();
 			long parentId = space.getTaskId();
 			space.suspendTask(this, parentId);
 			this.spawn(space, parentId);
+			long end = System.currentTimeMillis();
+			this.decomposeTime += (end-start);
+//			System.out.println("Decompose time: " + decomposeTime);
 		}
 	}
 

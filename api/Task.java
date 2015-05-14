@@ -18,7 +18,7 @@ import java.util.concurrent.Callable;
 public abstract class Task<V> implements Serializable {
 	protected int slotIndex;
 	protected long parentId;
-	protected List<V> argList;
+	protected List<Argument<V>> argList;
 	protected int missingArgCount;
 
 	protected static final int WAITING_ANSWER = -1;
@@ -46,7 +46,7 @@ public abstract class Task<V> implements Serializable {
 	public Task(long parentId, int slotIndex) {
 		this.slotIndex = slotIndex;
 		this.parentId = parentId;
-		this.argList = new ArrayList<V>();
+		this.argList = new ArrayList<Argument<V>>();
 	}
 
 	/**
@@ -91,10 +91,11 @@ public abstract class Task<V> implements Serializable {
 	 *             occurs if there is a communication problem or the remote
 	 *             service is not responding.
 	 */
-	public void feedback(V result, Space space) throws RemoteException {
+	public void feedback(Argument result, Space space) throws RemoteException {
 		if (this.parentId == NO_PARENT)
 			try {
-				space.setupResult(result);
+				space.setupResult(result.getArg());
+				System.out.println("Critical path Time: " + result.getTime());
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
@@ -109,11 +110,11 @@ public abstract class Task<V> implements Serializable {
 	 *            the slot's index in the closure.
 	 * @return the argument of the corresponding slot.
 	 */
-	public V getArg(int index) {
-		if (index > argList.size() - 1 || index < 0)
+	public Argument<V> getArg(int index) {
+		if (index > this.argList.size() - 1 || index < 0)
 			return null;
 		else
-			return argList.get(index);
+			return this.argList.get(index);
 	}
 
 	/**
@@ -134,7 +135,7 @@ public abstract class Task<V> implements Serializable {
 	 * @param index
 	 *            the index of the slot where the argument should insert.
 	 */
-	public void insertArg(V arg, int index) {
+	public void insertArg(Argument<V> arg, int index) {
 		this.argList.set(index, arg);
 		assert this.missingArgCount > 0;
 		this.missingArgCount--;
