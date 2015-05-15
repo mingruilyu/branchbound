@@ -326,7 +326,7 @@ public class TaskEuclideanTsp extends Task<List<Integer>> implements
 			synchronized(t1) {
 				t1 += end - start;
 			}
-			this.decomposeTime += (end-start);
+			this.decomposeTime += (end - start);
 //			System.out.println("Decompose time: " + decomposeTime);
 		}
 	}
