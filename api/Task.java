@@ -21,6 +21,7 @@ public abstract class Task<V> implements Serializable {
 	protected List<Argument<V>> argList;
 	protected int missingArgCount;
 
+	public static Long t1 = new Long(0);
 	protected static final int WAITING_ANSWER = -1;
 	public static final int NO_PARENT = -1;
 
@@ -95,7 +96,8 @@ public abstract class Task<V> implements Serializable {
 		if (this.parentId == NO_PARENT)
 			try {
 				space.setupResult(result.getArg());
-				System.out.println("Critical path Time: " + result.getTime());
+				System.out.println("Critical path Time: " + result.getTime() / 1000);
+				System.out.println("T1: " + t1 / 1000);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}

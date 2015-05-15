@@ -19,7 +19,6 @@ import api.Task;
 public class TaskEuclideanTsp extends Task<List<Integer>> implements
 		Serializable {
 	public static final long serialVersionUID = 227L;
-	public static long t1 = 0;
 	private long decomposeTime = 0;
 	private int settledCity;
 	private int n;
@@ -255,7 +254,9 @@ public class TaskEuclideanTsp extends Task<List<Integer>> implements
             if(tempTime > maxTime) maxTime = tempTime;
 		}
 		long end = System.nanoTime();
-		t1 += end - start;
+		synchronized(t1) {
+			t1 += end - start;
+		}
 		return new TspArgument(minList, minCost, end - start + maxTime + this.decomposeTime);
 	}
 
@@ -292,7 +293,9 @@ public class TaskEuclideanTsp extends Task<List<Integer>> implements
 				}
 				long end = System.nanoTime();
 				time = end - start;
-				t1 += time;
+				synchronized(t1) {
+					t1 += time;
+				}
 				tspArgument = new TspArgument(result, minCost, time);
 			} else {
 				// calculate the minimum route of argument list
@@ -320,7 +323,9 @@ public class TaskEuclideanTsp extends Task<List<Integer>> implements
 			space.suspendTask(this, parentId);
 			this.spawn(space, parentId);
 			long end = System.nanoTime();
-			t1 += end - start;
+			synchronized(t1) {
+				t1 += end - start;
+			}
 			this.decomposeTime += (end-start);
 //			System.out.println("Decompose time: " + decomposeTime);
 		}
