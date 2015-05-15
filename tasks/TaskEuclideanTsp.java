@@ -6,10 +6,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import javax.management.MXBean;
-
-import jdk.internal.dynalink.beans.StaticClass;
 import api.Space;
 import api.Task;
 
@@ -23,7 +19,7 @@ import api.Task;
 public class TaskEuclideanTsp extends Task<List<Integer>> implements
 		Serializable {
 	public static final long serialVersionUID = 227L;
-	
+	public static long t1 = 0;
 	private long decomposeTime = 0;
 	private int settledCity;
 	private int n;
@@ -243,7 +239,7 @@ public class TaskEuclideanTsp extends Task<List<Integer>> implements
 	 * @throws RemoteException 
 	 */
 	private TspArgument getResult() throws RemoteException {
-		long start = System.currentTimeMillis();
+		long start = System.nanoTime();
 		List<Integer> minList = null;
 		double minCost = Double.MAX_VALUE;
 		long maxTime = 0;
@@ -258,7 +254,8 @@ public class TaskEuclideanTsp extends Task<List<Integer>> implements
 			long tempTime = this.getArg(i).getTime();
             if(tempTime > maxTime) maxTime = tempTime;
 		}
-		long end = System.currentTimeMillis();
+		long end = System.nanoTime();
+		t1 += end - start;
 		return new TspArgument(minList, minCost, end - start + maxTime + this.decomposeTime);
 	}
 
@@ -280,7 +277,7 @@ public class TaskEuclideanTsp extends Task<List<Integer>> implements
 			List<Integer> result = null;
 			if (this.missingArgCount == -1) {
 				// direct calculation
-				long start = System.currentTimeMillis();
+				long start = System.nanoTime();
 				double minCost = 0;
 				if(this.lowerbound < upperbound) {
 					Set<Integer> set = new HashSet<Integer>();
@@ -293,8 +290,9 @@ public class TaskEuclideanTsp extends Task<List<Integer>> implements
 					result = null;
 					minCost = Double.MAX_VALUE;
 				}
-				long end = System.currentTimeMillis();
+				long end = System.nanoTime();
 				time = end - start;
+				t1 += time;
 				tspArgument = new TspArgument(result, minCost, time);
 			} else {
 				// calculate the minimum route of argument list
@@ -317,11 +315,12 @@ public class TaskEuclideanTsp extends Task<List<Integer>> implements
 			// successor that correspond to this id was not put into waiting
 			// queue. 
 			
-			long start = System.currentTimeMillis();
+			long start = System.nanoTime();
 			long parentId = space.getTaskId();
 			space.suspendTask(this, parentId);
 			this.spawn(space, parentId);
-			long end = System.currentTimeMillis();
+			long end = System.nanoTime();
+			t1 += end - start;
 			this.decomposeTime += (end-start);
 //			System.out.println("Decompose time: " + decomposeTime);
 		}
